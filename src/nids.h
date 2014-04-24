@@ -1,3 +1,15 @@
+
+/*
+ * @file nids.h
+ *
+ * @author Akagi201
+ * @date 2014/04/24
+ *
+ * libnids定义的数据结构和函数的声明集中在头文件nids.h中.
+ * 使用libnids的应用程序必须包含这个文件, 并且要与libnids.a静态库进行连接.
+ *
+ */
+
 /*
   Copyright (c) 1999 Rafal Wojtczuk <nergal@7bulls.com>. All rights reserved.
   See the file COPYING for license details.
