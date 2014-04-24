@@ -909,6 +909,37 @@ nids_discard(struct tcp_stream * a_tcp, int num)
     a_tcp->read = num;
 }
 
+// TCP流的重组
+/*
+ * @brief
+ *
+ * 为了接收到一个TCP流中交换的数据, 必须定义一个回调函数
+ * void tcp_callback(struct tcp_stream *ns, void **param);
+ * tcp_stream结构包含了所有的关于一个TCP连接的信息, 例如: 他包含了2个half_stream(名为client和server)结构类型的域.
+ * 每一个描述了一侧的连接, 我们将在后面解释所有的域.
+ * tcp_stream的一个域的名字为nids_state, tcp_callback的行为依赖于这个域的值.
+ *
+ * ns->nids_state == NIDS_JUST_EST
+ * 这里, ns描述了一个刚刚建立的连接. tcp_callback必须决定当将来这个连接中的数据到达的时候, 它是否希望被通知.
+ * 所有的连接参数都是可用的(ip地址, 端口号等等).
+ * 如果这个连接是我们感兴趣的, tcp_callback函数通知Libnids它希望接收什么数据
+ * (发到客户端的数据, 发到服务器的数据, 发到客户端的紧急数据, 发到服务器的紧急数据), 然后函数返回.
+ *
+ * ns->nids_state == NIDS_DATA
+ * 这里, 新的数据已经到达, half_stream结构(tcp_stream结构的成员)包含数据缓冲区.
+ *
+ * nids_state域的其他可能值:
+ * NIDS_CLOSE
+ * NIDS_RESET
+ * NIDS_TIMED_OUT
+ * 意味着连接已经关闭, tcp_callback应该释放分配的资源, 如果有的话.
+ *
+ * ns->nids_state == NIDS_EXITING
+ * 这里, libnids正在退出. 这是应用最后的机会来利用任何保存在half_stream缓存中的留下的数据.
+ * 当从一个capture file而不是网络中读流量时, libnids也许绝对不会看到一个close, reset, 或者timeout.
+ * 如果应用有没有处理的数据(如来自using_nids_discard()), 这个允许应用来处理他.
+ *
+ */
 void
 nids_register_tcp(void (*x))
 {

@@ -6,8 +6,20 @@
  * @date 2014/04/24
  *
  * libnids定义的数据结构和函数的声明集中在头文件nids.h中.
- * 使用libnids的应用程序必须包含这个文件, 并且要与libnids.a静态库进行连接.
+ * 使用libnids的应用程序必须包含这个文件, 并且要与libnids.a(或者libnids.so.x.y)进行连接.
  *
+ * 应用程序的main函数一般是这种框架
+ *
+int main (void) {
+	// 应用程序的是有处理, 与libnids无关
+	// libnids一些可选参数的修改
+	if (!nids_init()) {
+		// 如果哪里出错了, 终止
+		// 注册回调函数
+		nids_run();
+	}
+	// 通常情况下, 不会运行到这里
+}
  */
 
 /*
@@ -54,34 +66,69 @@ enum
   NIDS_WARN_TCP_BADFLAGS
 };
 
-# define NIDS_JUST_EST 1
-# define NIDS_DATA 2
-# define NIDS_CLOSE 3
-# define NIDS_RESET 4
-# define NIDS_TIMED_OUT 5
-# define NIDS_EXITING   6	/* nids is exiting; last chance to get data */
+# define NIDS_JUST_EST (1)
+# define NIDS_DATA (2)
+# define NIDS_CLOSE (3)
+# define NIDS_RESET (4)
+# define NIDS_TIMED_OUT (5)
+# define NIDS_EXITING   (6)	/* nids is exiting; last chance to get data */
 
-# define NIDS_DO_CHKSUM  0
-# define NIDS_DONT_CHKSUM 1
+# define NIDS_DO_CHKSUM  (0)
+# define NIDS_DONT_CHKSUM (1)
 
+/*
+ * @brief TCP连接参数4元组
+ */
 struct tuple4
 {
-  u_short source;
-  u_short dest;
-  u_int saddr;
-  u_int daddr;
+  u_short source; // 源端口
+  u_short dest; // 目的端口
+  u_int saddr; // 源地址
+  u_int daddr; // 目的地址
 };
 
+/*
+ * @brief TCP连接一侧的描述结构
+ *
+ * structure describing one side of a TCP connection
+ */
 struct half_stream
 {
-  char state;
+  char state; // socket state (ie TCP_ESTABLISHED)
+  /* if >0, then data should be stored in
+   * "data" buffer; else
+   * data flowing in this direction will be ignored
+   * have a look at samples/sniff.c for an example
+   * how one can use this field
+   */
+  /*
+   * if >0, 那么数据应该被存放到data缓冲区中. 否则,
+   * 这个方向的数据流将被忽略
+   * 看一下samples/sniff.c文件如何使用这个域
+   */
   char collect;
-  char collect_urg;
+  // 类似地, 判断是否为紧急数据
+  char collect_urg; // analogically, determines if to collect urgent data
 
-  char *data;
+  char *data; // buffer for normal data 正常数据缓冲区
+
+  /*
+   * offset (in data stream) of first byte stored in
+   * the "data" buffer; additional explanations follow
+   */
   int offset;
-  int count;
-  int count_new;
+
+  /*
+   * how many bytes has been appended to buffer "data"
+   * since the creation of a connection
+   */
+  int count; // 自连接建立以来已经有多少字节已经发送到data缓冲区中
+
+  /*
+   * how many bytes were appended to "data" buffer
+   * last (this) time; if == 0, no new data arrived
+   */
+  int count_new; // 多少字节将被发送到data缓冲区中last (this) time;
   int bufsize;
   int rmem_alloc;
 
@@ -90,8 +137,8 @@ struct half_stream
   u_int seq;
   u_int ack_seq;
   u_int first_data_seq;
-  u_char urgdata;
-  u_char count_new_urg;
+  u_char urgdata; // one-byte buffer for urgent data
+  u_char count_new_urg; // if != 0, new urgent data arrived 如果不等于0, 新的紧急数据到达
   u_char urg_seen;
   u_int urg_ptr;
   u_short window;
@@ -103,9 +150,12 @@ struct half_stream
   struct skbuff *listtail;
 };
 
+/*
+ * @brief TCP流信息
+ */
 struct tcp_stream
 {
-  struct tuple4 addr;
+  struct tuple4 addr; // connections params (saddr, daddr, sport, dport)
   char nids_state;
   struct lurker_node *listeners;
   struct half_stream client;

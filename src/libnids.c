@@ -483,6 +483,14 @@ void nids_unregister_udp(void (*x))
     unregister_callback(&udp_procs, x);
 }
 
+/*
+ * @brief 注册目标机器的ip包的回调函数
+ *
+ * 类似地, 为了只接收会被目标主机接受的包(即没有分片的包或者已经完成重组的分片包, 头部的正确性已经校验过), 需要定义下面的函数
+ * void ip_func(struct ip * a_packet, int len)
+ * 然后被libnids注册:
+ * nids_register_ip(ip_func);
+ */
 void nids_register_ip(void (*x))
 {
     register_callback(&ip_procs, x);
@@ -493,6 +501,17 @@ void nids_unregister_ip(void (*x))
     unregister_callback(&ip_procs, x);
 }
 
+// IP碎片重组  / IP defragmentation
+/*
+ * @brief 注册IP碎片的回调函数
+ *
+ * 为了接收到libnids看到的所有的IP包(包括分片的, 带有无效校验和的IP包等等), 程序员应该定义一个如下类型的回调函数:
+ * void ip_frag_func(struct ip *a_packet, int len);
+ * 在调用了nids_init之后, 这个函数应该被libnids注册.
+ * nids_register_ip_frag(ip_frag_func);
+ * ip_frag_func将会从libnids库里被调用, a_packet将会指向一个收到的数据包, len是包的长度.
+ *
+ */
 void nids_register_ip_frag(void (*x))
 {
     register_callback(&ip_frag_procs, x);

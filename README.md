@@ -14,4 +14,5 @@ aklibnids
 
 ## Refs
 * <http://libnids.sourceforge.net/>
+* [libnids API中文版](http://www.linuxnote.org/libnids-api-chinese-version.html)
 
