@@ -902,6 +902,9 @@ process_tcp(u_char * data, int skblen)
     nids_free_tcp_stream(a_tcp);
 }
 
+/*
+ * @brief 丢弃num字节TCP数据, 用于存储更多的数据
+ */
 void
 nids_discard(struct tcp_stream * a_tcp, int num)
 {
@@ -911,10 +914,11 @@ nids_discard(struct tcp_stream * a_tcp, int num)
 
 // TCP流的重组
 /*
- * @brief
+ * @brief 回调函数的功能是注册一个TCP连接的回调函数
  *
  * 为了接收到一个TCP流中交换的数据, 必须定义一个回调函数
  * void tcp_callback(struct tcp_stream *ns, void **param);
+ * 其中参数ns表示一个tcp连接的所有信息,它的类型是tcp_stream数据结构;参数param表示要传递的连接参数信息,可以指向一个TCP连接的私有数据
  * tcp_stream结构包含了所有的关于一个TCP连接的信息, 例如: 他包含了2个half_stream(名为client和server)结构类型的域.
  * 每一个描述了一侧的连接, 我们将在后面解释所有的域.
  * tcp_stream的一个域的名字为nids_state, tcp_callback的行为依赖于这个域的值.

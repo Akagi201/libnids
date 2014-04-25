@@ -42,6 +42,18 @@ void nids_killtcp_seq(struct tcp_stream *a_tcp, int seqoff)
     libnet_do_checksum(buf, IPPROTO_TCP, TCP_H);
     libnet_write_ip(libnetsock, buf, TCP_H + IP_H);
 }
+
+/*
+ * @brief 通过发送RST结束一个a_tcp描述的TCP连接
+ *
+ * 起初, 由libnids发送的RST segment被提供一个序列号, 在目标的TCP窗口的一半.
+ * 微软windows系统带有MS05-019补丁的, 在接收这个RST时, 不会销毁连接.
+ * 所以, 现在libnids在每个方向发送2个RSTs - 额外的一个有最低(被预计的)的seq.
+ * 不幸的是, 他有点不可靠: 如果由于流量爆发, 你的应用是当前流量的几毫秒之后的延迟, 他看到的当前和期待的seq可能是错误的.
+ * 自然地, 发送一个RST作为一个防御方法在设计上是不可靠的, 除非部署在一个"inline NIDS", 或者 NIPS(有人这么叫他), 因此是一个"toy" label
+ *
+ * @param[in] a_tcp: TCP连接信息
+ */
 void nids_killtcp(struct tcp_stream *a_tcp)
 {
     nids_killtcp_seq(a_tcp, 0);

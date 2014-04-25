@@ -43,7 +43,47 @@ adres(struct tuple4 addr) {
 	sprintf(buf + strlen(buf), ",%i", addr.dest);
 	return buf;
 }
+/*
+ * @brief
+ *
+ * 在上面的例子程序中, 函数tcp_callback打印 hlf->data缓冲区的数据到stderr上, 并且这些数据不再需要了.
+ * 在tcp_callback返回后, 默认情况下Libnids释放这些数据占用的空间.
+ * hlf->offset域将增加丢弃的字节数, 并且新的数据将存储到data缓冲区的开始.
+ * 如果上面的操作不是我们所希望的, (例如，数据处理器需要至少N字节的输入来处理, 并且迄今为止Libnids接收到的count_new<N字节), 你需要在tcp_callback返回前,调用下面的函数:
+ * void nids_discard(struct tcp_stream * a_tcp, int num_bytes);
+ * 结果, 在 tcp_callback返回后, Libnids将丢弃data缓冲区中至多num_bytes字节的前面的内容(相应地更新offset域, 移动剩下的数据到data缓冲区的开始位置).
+ * 如果nids_discard函数没有被调用(像这个例子程序)缓冲区 hlf->data就正好包含hlf->count_new字节的内容.
+ * 一般情况下, 缓冲区 hlf->data中的字节数等于hlf->count-hlf->offset.
+ * 多亏了nids_discard函数, 程序员不必把接收到的数据拷贝到一个独立的缓冲区中. hlf->data将一直包含尽可能多的数据.
+ * 可是, 经常发生一个需求来维持每一个对(libnids_callback, tcp stream)的辅助数据结构.
+ * 例如, 如果我们希望检测一个针对wu-ftpd的攻击(这个攻击包括在服务器上建立深层目录), 我们需要将Ftpd守护进程的当前目录存储到某一个地方.
+ * 将通过Ftp客户端发送CWD指令来改变. 这就是tcp_callback的第二个参数的用途.
+ * 它是每一个对(libnids_callback, tcp stream)的私有的数据的指针的指针.
+ * 通常, 我们应该这样使用他:
 
+void tcp_callback_2(struct tcp_stream *a_tcp, struct conn_param **ptr) {
+	if (NIDS_JUST_EST == a_tcp->nids_state) {
+		struct conn_param *a_conn;
+		if the connection is uninteresting, return;// 如果连接是我们不感兴趣的就返回
+		a_conn = malloc of some data structure; // 分配内存
+		init of a_conn; // 初始化
+		// 这个值在将来的调用中将被传递给tcp_callback_2增加一些"collect"域
+		*ptr = a_conn; // this value will be passed to tcp_callback_2 in future calls increase some of "collect" fields;
+		return;
+	}
+
+	if (NIDS_DATA == a_tcp->nids_state) {
+		struct conn_param *current_conn_param = *ptr;
+		using current_conn_param and the newly received data from the net;
+		we search for attack signatures, possibly modifying;
+		current_conn_param;
+		return;
+	}
+}
+ * 函数 nids_register_tcp 和 nids_register_ip* 可以被调用任意次数.
+ * 2种不同的函数(类似tcp_callback)允许跟踪同一个TCP流(带有某个非默认的exception).
+ *
+ */
 void tcp_callback(struct tcp_stream *a_tcp, void ** this_time_not_needed) {
 	char buf[1024];
 	strcpy(buf, adres(a_tcp->addr)); // we put conn params into buf
@@ -107,7 +147,7 @@ void tcp_callback(struct tcp_stream *a_tcp, void ** this_time_not_needed) {
 									// (saddr, daddr, sport, dport) accompanied
 									// by data flow direction (-> or <-)
 
-		write(2, hlf->data, hlf->count_new); // we print the newly arrived data 我们打印最新到达的数据
+		write(2, hlf->data, hlf->count_new); // we print the newly arrived data 我们打印最新到达的数据到stderr
 
 	}
 	return;

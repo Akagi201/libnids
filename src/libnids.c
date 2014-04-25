@@ -87,6 +87,11 @@ char *nids_warnings[] = {
     "Invalid TCP flags"
 };
 
+/*
+ * nids_params全局参数的初始值
+ *
+ * 在使用libnids开发程序时, 可以首先对nids_params全局变量的值进行修改, 这样对整个libnids就全部有效
+ */
 struct nids_prm nids_params = {
     1040,			/* n_tcp_streams */
     256,			/* n_hosts */
@@ -473,6 +478,24 @@ static void init_procs()
     udp_procs = 0;
 }
 
+/*
+ * @brief 此函数的功能注册一个分析UDP协议的回调函数
+ *
+ * 如果一个人对UDP数据包感兴趣, 他应该声明:
+ *
+ * @param[in] addr: 包含地址信息
+ * @param[in] buf: 指向UDP数据包携带的数据
+ * @param[in] len: 数据长度
+ * @param[in] iph: 包含此UDP数据包的IP包的指针, 校验和已经校验过的
+ *
+ * void udp_callback(struct tuple4 * addr, char * buf, int len, struct ip * iph);
+ *
+ * 其中参数addr表示的是端口的信息,参数buf表示UDP协议负载数据内容,参数len 表示UDP负载数据的长度;参数iph表示一个IP数据包,包括IP首部,UDP首部以及UDP负载内容
+ * 注册:
+ * nids_register_udp(udp_callback);
+ *
+ *
+ */
 void nids_register_udp(void (*x))
 {
     register_callback(&udp_procs, x);
@@ -484,7 +507,7 @@ void nids_unregister_udp(void (*x))
 }
 
 /*
- * @brief 注册目标机器的ip包的回调函数
+ * @brief 此函数定义一个回调函数, 此回调函数可以接受正常的IP数据包
  *
  * 类似地, 为了只接收会被目标主机接受的包(即没有分片的包或者已经完成重组的分片包, 头部的正确性已经校验过), 需要定义下面的函数
  * void ip_func(struct ip * a_packet, int len)
@@ -503,7 +526,7 @@ void nids_unregister_ip(void (*x))
 
 // IP碎片重组  / IP defragmentation
 /*
- * @brief 注册IP碎片的回调函数
+ * @brief 注册一个能够检测所有IP数据包的回调函数, 包括IP碎片
  *
  * 为了接收到libnids看到的所有的IP包(包括分片的, 带有无效校验和的IP包等等), 程序员应该定义一个如下类型的回调函数:
  * void ip_frag_func(struct ip *a_packet, int len);
@@ -599,6 +622,9 @@ static void cap_queue_process_thread()
 
 #endif
 
+/*
+ * @brief 对libnids进行初始化
+ */
 int nids_init()
 {
     /* free resources that previous usages might have allocated */
@@ -699,6 +725,13 @@ int nids_init()
     return 1;
 }
 
+/*
+ * @brief 运行libnids, 进入循环捕获数据包状态(pcap_loop).
+ *
+ * 使用nids_run()有一个个缺点 - 应用变成了完全的包驱动(packets driven). 有时在没有包到达的时候, 执行某些操作也是必须的.
+ * 作为代替nids_run(), 我们可以使用函数:
+ * int nids_next();
+ */
 int nids_run()
 {
     if (!desc) {
@@ -741,6 +774,14 @@ void nids_exit()
     free(ip_frag_procs);
 }
 
+/*
+ * @brief 获得文件描述号
+ *
+ * 标准情况下, 当使用nids_next()时, 因各应用程序将睡眠在一个select()函数中, 同时在 fd_set中引入了一个监听的socket fd.
+ * 这个fd可以通过下面的调用获得:nids_getfd()
+ *
+ * @return -1: 失败 / 其他: 文件描述符 (nids_errbuf包含出错信息)
+ */
 int nids_getfd()
 {
     if (!desc) {
@@ -750,6 +791,13 @@ int nids_getfd()
     return pcap_get_selectable_fd(desc);
 }
 
+/*
+ * @brief 调用libpcap中的捕获数据包函数pcap_next()
+ *
+ * 这个函数调用 pcap_next()而不是 pcap_loop, 就是说它只处理一个包, 如果没有包可用, 程序将处于睡眠状态.
+ *
+ * @return 0: 出错 / 1: 成功, (nids_errbuf 包含相关联的信息)
+ */
 int nids_next()
 {
     struct pcap_pkthdr h;
@@ -771,6 +819,9 @@ int nids_next()
     return 1;
 }
 
+/*
+ * @brief 功能是调用libpcap中的捕获数据包函数pcap_dispatch().
+ */
 int nids_dispatch(int cnt)
 {
     int r;

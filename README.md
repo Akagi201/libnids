@@ -1,6 +1,8 @@
 aklibnids
 =========
 
+libnids是一个用于网络入侵检测开发的专业编程接口,它使用了libpcap, 所以, 它具有捕获数据包的功能. 同时, libnids提供了TCP数据流重组功能, 所以, 对于分析基于TCP协议的各种协议Libnids都能胜任. libnids还提供了对IP分片进行重组的功能, 以及端口扫描检测和异常数据包检测功能.
+
 ## What
 
 * libnids是网络入侵检测系统(IDS)的E-component的一个实现(NIDS E-component library).

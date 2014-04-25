@@ -10,6 +10,9 @@
 static struct nids_chksum_ctl * nchk;
 static int nrnochksum=0;
 
+/*
+ * @brief 决定是否计算校验和, 它是根据数据结构nids_chksum_ctl中的action进行决定的
+ */
 void nids_register_chksum_ctl(struct nids_chksum_ctl * ptr, int nr)
 {
 	nchk=ptr;
