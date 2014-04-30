@@ -14,3 +14,12 @@ Makefile.in
 /stamp-h1
 .cproject
 .project
+
+*.o
+/Makefile
+/config.log
+/config.status
+/samples/Makefile
+/src/Makefile
+/src/config.h
+/src/libnids.a
