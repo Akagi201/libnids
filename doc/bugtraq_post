@@ -1,4 +1,27 @@
 [cut]
+
+<http://seclists.org/bugtraq/1999/Aug/2>
+
+Hello,
+From
+http://www.packetfactory.net/libnids
+one can download sources, sample apps and documentation of libnids. Libnids is
+a shared library that provides functionality of NIDS E-component. It performs
+IP defragmentation, TCP stream assembly and TCP port scan detection.
+        The most valuable feature of libnids is reliability. It passed all
+attacks implemented in Dug Song's fragrouter-1.3. A set of independent (and
+much more sophisticated) tests was conducted, which proved high reliability
+of libnids.
+        Anyone who has read "Eluding network intrusion detection" by Ptacek
+and Newsham is aware that different OS implement IP stack differently. Libnids
+emulates Linux 2.0.x kernels - in fact it contains a lot of code taken
+directly from kernel sources (e.g. files ip_fragment.c and ip_options.c).
+It means that by abusing [Linux kernel or OS X] networking code oddities, we
+can hide from libnids traffic to OS X, but it is really difficult. In all below
+mentioned tests target (monitored) hosts were running Linux 2.0.36.
+        Currently, libnids will compile on Linux glibc system only, but
+porting should be easy (libnids talks with the net using portable libpcap and
+libnet interface).
 	Libnids was implemented with regard to results of Linux kernel 2.0.x
 networking code analysis, included in my Master Thesis. This analysis was
 conducted from NIDS developer's point of view. Of course, 2.0.x family is

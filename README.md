@@ -14,6 +14,12 @@ libnids是一个用于网络入侵检测开发的专业编程接口,它使用了
 * 使用libnids可以方便的访问一个TCP流的数据, 无论攻击者多么巧妙的掩盖.
 * libnids被Rafal Wojtczuk设计.
 
+## Related project
+* [fragrouter by Dug Song](http://www.monkey.org/~dugsong/fragroute/)
+
+## Related paper
+* [Eluding Network Intrusion Detection](http://insecure.org/stf/secnet_ids/secnet_ids.html)
+
 ## Refs
 * <http://libnids.sourceforge.net/>
 * [libnids API中文版](http://www.linuxnote.org/libnids-api-chinese-version.html)
