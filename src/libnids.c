@@ -116,6 +116,9 @@ struct nids_prm nids_params = {
     NULL			/* pcap_desc */
 };
 
+/*
+ * @brief 此函数可以用来分析ip数据包, 当有ip数据包到达时, 此函数被调用. 默认值为nids_ip_filter
+ */
 static int nids_ip_filter(struct ip *x, int len)
 {
     (void)x;
@@ -123,6 +126,14 @@ static int nids_ip_filter(struct ip *x, int len)
     return 1;
 }
 
+/*
+ * @brief 自定义事件日志函数, 调用syslog函数将日志信息传给系统守护进程syslogd
+ *
+ * @param[in] type: 警告信息类型
+ * @param[in] errnum: 错误编号
+ * @param[in] iph: IP头信息
+ * @param[in] data: 数据信息
+ */
 static void nids_syslog(int type, int errnum, struct ip *iph, void *data)
 {
     char saddr[20], daddr[20];
@@ -476,6 +487,8 @@ static void init_procs()
     ip_procs->next = 0;
     tcp_procs = 0;
     udp_procs = 0;
+
+    return;
 }
 
 /*

@@ -206,9 +206,9 @@ struct nids_prm {
 	 */
 	/*
 	 * 用于存储tcp_stream结构信息的Hash表的大小
-	 * libnis将只能同时跟踪 3/4 * n_tcp_streams连接的数据流
+	 * libnis将只能同时跟踪 不超过3/4 * n_tcp_streams连接的数据流
 	 * 默认值: 1040
-	 * 如果设置为0，Libnids将不再进行TCP流的组装
+	 * 如果设置为0，Libnids将不再进行TCP流的重组.
 	 */
 	int n_tcp_streams; //表示哈希表大小, 此哈希表用来存放tcp_stream数据结构,
 
@@ -236,8 +236,8 @@ struct nids_prm {
 	 * Libnids用于监听数据包的设备接口
 	 * 默认值: NULL, 将通过调用pcap_lookupdev函数来接决定.
 	 * 特殊值all将致使Libnids试图通过所有的设备接口截获数据包
-	 * (这个参数在高于2.2.0Linux 核心版本有效)
-	 * 参见 doc/NEW_LIBPCAP
+	 * (这个参数生效需要linux kernel>2.2.0, libpcap >= 0.6.0)
+	 * 参见 doc/LINUX
 	 */
 	char *device;
 
@@ -259,13 +259,13 @@ struct nids_prm {
 	 * parameter. Default value: 168
 	 */
 	/*
-	 * 结构sk_buff的大小, 这个结构是由Linux核心定义的, 核心用于
-	 * 数据包排列, 如果这个参数和sizeof(struct sk_buff)地值不同,
-	 * Libnids可以通过攻击其资源管理而被绕过. 见TEST文件.
-	 * 如果你是一个喜欢妄想的人, 那么检查你网络中主机的sizeof(sk_buff)
+	 * 结构sk_buff的大小, 这个结构是由linux kernel定义的, kernel用于
+	 * 数据包排列, 如果这个参数和sizeof(struct sk_buff)的值不同,
+	 * Libnids可以通过攻击其资源管理(libnis)而被绕过. 见TEST文件.
+	 * 如果你是一个多疑的人, 那么检查你网络中主机的sizeof(sk_buff)
 	 * 并调整这个参数, 默认值: 168
 	 */
-	int sk_buff_size; // 表示数据结构sk_buff的大小. 数据结构sk_buff是linux内核中一个重要的数据结构, 是用来进行数据包队列操作的
+	int sk_buff_size; // 表示数据结构sk_buff的大小, 即sizeof(struct sk_buff) 数据结构sk_buff是linux内核中一个重要的数据结构, 是用来进行数据包队列操作的
 
 	/*
 	 * how many bytes in structure sk_buff is reserved for
@@ -310,7 +310,7 @@ struct nids_prm {
 	 * off. Default value: 256.
 	 */
 	/*
-	 * 用于存储关于端口扫描的信息的Hash表的大小; Libndis能够检测
+	 * 用于存储关于端口扫描的信息的Hash表的大小; Libnids能够检测
 	 * 到的同时发生的端口扫描企图. 如果设置为0, 端口扫描检测将被关闭
 	 * 默认值: 256
 	 */
@@ -324,9 +324,9 @@ struct nids_prm {
 	/*
 	 * 两个端口之间最大的扫描间隔
 	 * 用于使Libnids可以报告端口扫描企图
-	 * 默认值: 3000
+	 * 默认值: 3000 ms
 	 */
-	int scan_delay; // 表示在扫描检测中, 两端口扫描的间隔时间
+	int scan_delay; // 表示在扫描检测中, 两端口扫描的间隔时间, 单位: ms
 
 	/*
 	 * how many TCP ports has to be scanned from the same
@@ -343,7 +343,7 @@ struct nids_prm {
 	 * terminate the current process
 	 */
 	/*
-	 * 当Libndis的内存资源耗尽时调用此函数
+	 * 当Libnids的内存资源耗尽时调用此函数
 	 * 它应该终止当前进程
 	 */
 	void (*no_mem)(char *); // 当libnids发生内存溢出时被调用
@@ -378,8 +378,9 @@ struct nids_prm {
 	 */
 	/*
 	 * 用于pcap地过滤字符串, 默认情况下为NULL.
-	 * 需要了解的是这强应用到link-layer, 所以象"tcp dst port 23"
-	 * 一样的过滤器无法控制碎片传输.
+	 * 需要了解的是这个应用到link-layer, 所以象"tcp dst port 23"
+	 * 一样的过滤器无法控制碎片传输. 应该添加像"or (ip[6:2] & 0x1fff != 0)"
+	 * 字符串来处理所有的碎片包.
 	 */
 	char *pcap_filter; // 表示过滤规则
 
@@ -407,7 +408,7 @@ struct nids_prm {
 	 * if you want a quick reaction to traffic; this
 	 * is present starting with libnids-1.20
 	 */
-	int pcap_timeout;
+	int pcap_timeout; // pcap_open_live的timeout参数, 默认值为1024(ms),
 
 	/*
 	 * start ip defragmentation and tcp stream assembly in a
@@ -442,7 +443,7 @@ struct nids_prm {
 	/*
 	 * pcap descriptor
 	 */
-	pcap_t *pcap_desc;
+	pcap_t *pcap_desc; // pcap句柄
 };
 
 struct tcp_timeout {

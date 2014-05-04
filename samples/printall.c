@@ -29,20 +29,21 @@
 // 10.0.0.1,1024,10.0.0.2,23
 
 /*
- * @brief 下面的辅助函数生成一个类似 "10.0.0.1,1024,10.0.0.2,23" 的字符串
- *
+ * @brief 下面的辅助函数生成一个类似 "10.0.0.1,1024,10.0.0.2,23" 的字符串来表示一个TCP连接信息
+ * 格式为: 源地址,源端口,目的地址,目的端口
  * @param[in] addr: TCP连接的地址和端口
  * @return
  */
 char *
 adres(struct tuple4 addr) {
-	static char buf[256];
+	static char buf[256] = { 0 };
 	strcpy(buf, int_ntoa(addr.saddr));
 	sprintf(buf + strlen(buf), ",%i,", addr.source);
 	strcat(buf, int_ntoa(addr.daddr));
 	sprintf(buf + strlen(buf), ",%i", addr.dest);
 	return buf;
 }
+
 /*
  * @brief
  *
@@ -61,33 +62,33 @@ adres(struct tuple4 addr) {
  * 它是每一个对(libnids_callback, tcp stream)的私有的数据的指针的指针.
  * 通常, 我们应该这样使用他:
 
-void tcp_callback_2(struct tcp_stream *a_tcp, struct conn_param **ptr) {
-	if (NIDS_JUST_EST == a_tcp->nids_state) {
-		struct conn_param *a_conn;
-		if the connection is uninteresting, return;// 如果连接是我们不感兴趣的就返回
-		a_conn = malloc of some data structure; // 分配内存
-		init of a_conn; // 初始化
-		// 这个值在将来的调用中将被传递给tcp_callback_2增加一些"collect"域
-		*ptr = a_conn; // this value will be passed to tcp_callback_2 in future calls increase some of "collect" fields;
-		return;
-	}
+ void tcp_callback_2(struct tcp_stream *a_tcp, struct conn_param **ptr) {
+ if (NIDS_JUST_EST == a_tcp->nids_state) {
+ struct conn_param *a_conn;
+ if the connection is uninteresting, return;// 如果连接是我们不感兴趣的就返回
+ a_conn = malloc of some data structure; // 分配内存
+ init of a_conn; // 初始化
+ // 这个值在将来的调用中将被传递给tcp_callback_2增加一些"collect"域
+ *ptr = a_conn; // this value will be passed to tcp_callback_2 in future calls increase some of "collect" fields;
+ return;
+ }
 
-	if (NIDS_DATA == a_tcp->nids_state) {
-		struct conn_param *current_conn_param = *ptr;
-		using current_conn_param and the newly received data from the net;
-		we search for attack signatures, possibly modifying;
-		current_conn_param;
-		return;
-	}
-}
+ if (NIDS_DATA == a_tcp->nids_state) {
+ struct conn_param *current_conn_param = *ptr;
+ using current_conn_param and the newly received data from the net;
+ we search for attack signatures, possibly modifying;
+ current_conn_param;
+ return;
+ }
+ }
  * 函数 nids_register_tcp 和 nids_register_ip* 可以被调用任意次数.
  * 2种不同的函数(类似tcp_callback)允许跟踪同一个TCP流(带有某个非默认的exception).
  *
  */
 void tcp_callback(struct tcp_stream *a_tcp, void ** this_time_not_needed) {
-	char buf[1024];
+	char buf[1024] = { 0 };
 	strcpy(buf, adres(a_tcp->addr)); // we put conn params into buf
-	if (a_tcp->nids_state == NIDS_JUST_EST) {
+	if (NIDS_JUST_EST == a_tcp->nids_state) {
 		// connection described by a_tcp is established 由a_tcp描述的连接已经建立
 		// here we decide, if we wish to follow this stream 这里我们决定是否希望跟踪这个流
 		// sample condition: if (a_tcp->addr.dest!=23) return; 例子条件: if (a_tcp->addr.dest!=23) return;

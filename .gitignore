@@ -23,3 +23,6 @@ Makefile.in
 /src/Makefile
 /src/config.h
 /src/libnids.a
+/samples/overflows
+/samples/printall
+/samples/sniff
